@@ -1,0 +1,6 @@
+{
+  "benchmark": {
+    "size": "1M",
+    "algo": "rx/0"
+  }
+}

@@ -289,8 +289,8 @@ cd ~/xmrig-riscv/build
 ls -la xmrig           # Should show executable file
 ./xmrig --version      # Should show: XMRig/6.x.x (Linux RISC-V, 64-bit)
 
-# Test RandomX algorithm
-./xmrig --algo=rx/wow --benchmark --bench=1000
+# Test RandomX algorithm (built-in benchmark)
+./xmrig --algo=rx/wow --bench=1M
 ```
 
 ### Build Issues
@@ -319,7 +319,7 @@ ls -la xmrig           # Should show executable file
 # Should show: XMRig/6.x.x (Linux RISC-V, 64-bit)
 
 # Quick benchmark
-./xmrig --algo=rx/wow --benchmark --bench=1000
+./xmrig --algo=rx/wow --bench=1M
 
 # Conservative mining
 ./xmrig --algo=rx/wow --threads=3 -o pool.minexmr.com:4444 -u YOUR_WALLET
@@ -342,18 +342,51 @@ ls -la xmrig           # Should show executable file
 
 ```bash
 # Quick algorithm test (30 seconds each)
-./xmrig --algo=rx/wow --benchmark --bench=1M
-./xmrig --algo=rx/0 --benchmark --bench=1M
+./xmrig --algo=rx/wow --bench=1M
+./xmrig --algo=rx/0 --bench=1M
 
 # Extended benchmark (10 minutes)
-./xmrig --algo=rx/wow --benchmark --bench=10M
+./xmrig --algo=rx/wow --bench=10M
 
 # Test both modes
-./xmrig --algo=rx/wow --randomx-mode=light --benchmark --bench=1M
-./xmrig --algo=rx/wow --randomx-mode=fast --benchmark --bench=1M
+./xmrig --algo=rx/wow --randomx-mode=light --bench=1M
+./xmrig --algo=rx/wow --randomx-mode=fast --bench=1M
 
-# Memory usage test
-./xmrig --algo=rx/0 --randomx-1gb-pages --benchmark --bench=100K
+# Memory usage test (uses huge pages)
+./xmrig --algo=rx/0 --randomx-1gb-pages --bench=1M
+
+#### Tip: Run benchmark without a config
+
+The built-in benchmark doesn't need a config file. Use one of:
+
+```bash
+# Monero variant (2 MB per thread)
+./xmrig --algo=rx/0 --bench=1M --threads=2 --donate-level=0
+
+# Wownero variant (1 MB per thread)
+./xmrig --algo=rx/wow --bench=1M --threads=2 --donate-level=0
+```
+
+Valid sizes for `--bench` are 1M … 10M. Plain numbers like `1000` are invalid.
+
+#### Optional: Config-based benchmark
+
+You can also run the benchmark via a config file using the `benchmark` object:
+
+```json
+{
+  "benchmark": {
+    "size": "1M",
+    "algo": "rx/0"
+  }
+}
+```
+
+Save this as `config_benchmark.json` and run:
+
+```bash
+./xmrig -c config_benchmark.json
+```
 ```
 
 ### RandomX Mining Commands

@@ -1,0 +1,22 @@
+{
+  "autosave": false,
+  "donate-level": 0,
+  "cpu": {
+    "enabled": true,
+    "huge-pages": true
+  },
+  "randomx": {
+    "mode": "light",
+    "1gb-pages": false,
+    "numa": false
+  },
+  "pools": [
+    {
+      "algo": "rx/0",
+      "url": "pool.supportxmr.com:3333",
+      "user": "YOUR_WALLET_ADDRESS",
+      "pass": "riscv",
+      "tls": false
+    }
+  ]
+}
