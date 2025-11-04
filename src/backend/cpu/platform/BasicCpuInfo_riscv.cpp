@@ -275,7 +275,10 @@ rapidjson::Value xmrig::BasicCpuInfo_riscv::toJSON(rapidjson::Document &doc) con
     out.AddMember("nodes", static_cast<uint64_t>(nodes()), allocator);
     out.AddMember("backend", StringRef(backend()), allocator);
     out.AddMember("msr", "none", allocator);
-    out.AddMember("assembly", StringRef(Assembly::toString(assembly())), allocator);
+    
+    // Create Assembly object and call toString on it
+    Assembly asmObj(assembly());
+    out.AddMember("assembly", StringRef(asmObj.toString()), allocator);
     out.AddMember("arch", "riscv64", allocator);
     
     // RISC-V specific extensions
