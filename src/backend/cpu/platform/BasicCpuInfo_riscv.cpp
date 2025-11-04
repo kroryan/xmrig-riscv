@@ -263,9 +263,8 @@ rapidjson::Value xmrig::BasicCpuInfo::toJSON(rapidjson::Document &doc) const
     out.AddMember("backend", StringRef(backend()), allocator);
     out.AddMember("msr", "none", allocator);
     
-    // Create Assembly object and call toString on it
-    Assembly asmObj(assembly());
-    out.AddMember("assembly", StringRef(asmObj.toString()), allocator);
+    // RISC-V: avoid linking x86 ASM utilities; report "none"
+    out.AddMember("assembly", StringRef("none"), allocator);
     out.AddMember("arch", "riscv64", allocator);
     
     // RISC-V specific extensions
