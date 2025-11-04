@@ -68,7 +68,7 @@ void (* const extra_hashes[4])(const uint8_t *, size_t, uint8_t *) = {
 };
 
 // Minimal CryptoNight implementations (disabled for RISC-V)
-template<Algorithm::Id ALGO, bool SOFT_AES>
+template<Algorithm::Id ALGO, bool SOFT_AES, int interleave>
 inline void cryptonight_single_hash(const uint8_t *__restrict__ input, size_t size, uint8_t *__restrict__ output, cryptonight_ctx **__restrict__ ctx, uint64_t height)
 {
     // CryptoNight algorithms are disabled for RISC-V architecture
