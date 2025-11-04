@@ -47,20 +47,20 @@ protected:
     bool hasXOP() const override                                                     { return false; }
     bool isVM() const override                                                       { return m_flags.test(FLAG_VM); }
     bool jccErratum() const override                                                 { return false; }
-    const char *backend() const override                                             { return "basic"; }
-    const char *brand() const override                                               { return m_brand.c_str(); }
+    const char *backend() const override;
+    const char *brand() const override                                               { return m_brand; }
     const std::vector<int32_t> &units() const override                               { return m_units; }
     CpuThreads threads(const Algorithm &algorithm, uint32_t limit) const override;
     MsrMod msrMod() const override                                                   { return MSR_MOD_NONE; }
     rapidjson::Value toJSON(rapidjson::Document &doc) const override;
-    size_t cores() const override                                                    { return m_cores; }
-    size_t L2() const override                                                       { return m_l2_cache; }
-    size_t L3() const override                                                       { return m_l3_cache; }
-    size_t nodes() const override                                                    { return m_nodes; }
-    size_t packages() const override                                                 { return m_packages; }
+    size_t cores() const override                                                    { return 0; }
+    size_t L2() const override                                                       { return 0; }
+    size_t L3() const override                                                       { return 0; }
+    size_t nodes() const override                                                    { return 0; }
+    size_t packages() const override                                                 { return 1; }
     size_t threads() const override                                                  { return m_threads; }
     Vendor vendor() const override                                                   { return m_vendor; }
-    uint32_t model() const override                                                  { return m_model; }
+    uint32_t model() const override                                                  { return 0; }
 
 #   ifdef XMRIG_FEATURE_HWLOC
     bool membind(hwloc_const_bitmap_t nodeset) override                              { return false; }
