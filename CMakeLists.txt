@@ -197,6 +197,7 @@ add_definitions(-D__STDC_FORMAT_MACROS -DUNICODE -D_FILE_OFFSET_BITS=64)
 
 find_package(UV REQUIRED)
 
+include(cmake/riscv_config.cmake)
 include(cmake/flags.cmake)
 include(cmake/randomx.cmake)
 include(cmake/argon2.cmake)

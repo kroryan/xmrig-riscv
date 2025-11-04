@@ -1,4 +1,9 @@
-if (WITH_GHOSTRIDER)
+# Ghostrider requires x86 intrinsics, disable on RISC-V
+if (XMRIG_RISCV)
+    message(STATUS "Ghostrider disabled on RISC-V (requires x86 intrinsics)")
+    set(WITH_GHOSTRIDER OFF)
+    set(GHOSTRIDER_LIBRARY "")
+elseif (WITH_GHOSTRIDER)
     add_definitions(/DXMRIG_ALGO_GHOSTRIDER)
     add_subdirectory(src/crypto/ghostrider)
     set(GHOSTRIDER_LIBRARY ghostrider)

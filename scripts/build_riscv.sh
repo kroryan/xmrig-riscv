@@ -5,7 +5,8 @@
 set -e
 
 echo "=== XMRig RISC-V Build Script ==="
-echo "Building XMRig optimized for RISC-V architecture"
+echo "Building XMRig with RandomX algorithm for RISC-V architecture"
+echo "Algorithms: RandomX family (rx/0, rx/wow, rx/loki) - CPU optimized"
 
 # Check we're in the right directory
 if [ ! -f "CMakeLists.txt" ]; then
@@ -26,12 +27,18 @@ cd build
 
 echo "2. Configuring build for RISC-V..."
 
-# Configure with RISC-V specific options
+# Configure with RISC-V specific options (RandomX optimized)
 cmake -DCMAKE_BUILD_TYPE=Release \
+      -DWITH_RANDOMX=ON \
       -DWITH_ASM=OFF \
       -DWITH_SSE4_1=OFF \
       -DWITH_AVX2=OFF \
       -DWITH_VAES=OFF \
+      -DWITH_GHOSTRIDER=OFF \
+      -DWITH_CN_LITE=OFF \
+      -DWITH_CN_HEAVY=OFF \
+      -DWITH_KAWPOW=OFF \
+      -DWITH_ARGON2=OFF \
       -DWITH_HWLOC=ON \
       -DWITH_TLS=ON \
       -DWITH_OPENCL=OFF \
@@ -45,10 +52,16 @@ if [ $? -ne 0 ]; then
     echo "Trying with minimal configuration..."
     
     cmake -DCMAKE_BUILD_TYPE=Release \
+          -DWITH_RANDOMX=ON \
           -DWITH_ASM=OFF \
           -DWITH_SSE4_1=OFF \
           -DWITH_AVX2=OFF \
           -DWITH_VAES=OFF \
+          -DWITH_GHOSTRIDER=OFF \
+          -DWITH_CN_LITE=OFF \
+          -DWITH_CN_HEAVY=OFF \
+          -DWITH_KAWPOW=OFF \
+          -DWITH_ARGON2=OFF \
           -DWITH_HWLOC=OFF \
           -DWITH_TLS=OFF \
           -DWITH_OPENCL=OFF \
@@ -80,22 +93,29 @@ if [ $? -eq 0 ]; then
     ./xmrig --version
     
     echo ""
-    echo "=== Quick Test ==="
-    echo "Running quick benchmark..."
-    timeout 30 ./xmrig --algo=rx/wow --benchmark --bench=1000 || echo "Benchmark test completed"
+    echo "=== RandomX Quick Test ==="
+    echo "Running RandomX benchmark..."
+    timeout 30 ./xmrig --algo=rx/wow --randomx-mode=light --benchmark --bench=1000 || echo "RandomX benchmark completed"
     
     echo ""
-    echo "=== Next Steps ==="
-    echo "1. Edit configuration:"
-    echo "   cp ../config.json . && nano config.json"
+    echo "=== Next Steps - RandomX Mining ==="
+    echo "1. Copy RISC-V optimized config:"
+    echo "   cp ../config_riscv.json ./config.json"
+    echo ""  
+    echo "2. Edit wallet address:"
+    echo "   nano config.json  # Replace YOUR_WALLET_ADDRESS_HERE"
     echo ""
-    echo "2. Run benchmark:"
-    echo "   ./xmrig --algo=rx/wow --benchmark --bench=100000"
+    echo "3. Test RandomX algorithms:"
+    echo "   chmod +x ../scripts/test_randomx.sh && ../scripts/test_randomx.sh"
     echo ""
-    echo "3. Start mining:"
+    echo "4. Run RandomX benchmarks:"
+    echo "   ./xmrig --algo=rx/wow --randomx-mode=light --benchmark --bench=1M"
+    echo "   ./xmrig --algo=rx/0 --randomx-mode=fast --benchmark --bench=1M"
+    echo ""
+    echo "5. Start RandomX mining:"
     echo "   ./xmrig -c config.json"
     echo ""
-    echo "Build complete for RISC-V!"
+    echo "RandomX build complete for RISC-V!"
 else
     echo ""
     echo "=== Build Failed ==="

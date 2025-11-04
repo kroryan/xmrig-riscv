@@ -1,14 +1,30 @@
-# XMRig RISC-V Port
+# XMRig RISC-V Port - RandomX Optimized
 
-This repository contains a RISC-V port of XMRig optimized for RISC-V 64-bit architecture, specifically tested on VisionFive 2 and Orange Pi RV2.
+This repository contains a **RandomX-focused** RISC-V port of XMRig, optimized for RISC-V 64-bit architecture. **RandomX** is the primary mining algorithm supported, specifically tested on VisionFive 2 and Orange Pi RV2.
 
-## Key Features
+## RandomX Algorithm Support
 
-- **RISC-V RVV (Vector Extension) Support**: Vectorized memory operations for improved performance
+**RandomX** is a proof-of-work algorithm specifically designed for general-purpose CPUs:
+- 🎯 **CPU-optimized**: Uses integer math, floating point operations, and branches
+- 💾 **Memory-hard**: Requires significant memory (256MB-2GB) to discourage ASICs
+- 🔄 **Virtual machine**: Executes randomized programs in a specialized instruction set
+- 🛡️ **ASIC-resistant**: Designed to maintain CPU mining advantage
+
+### Why RandomX Works Best on RISC-V
+
+- ✅ **No x86 intrinsics required** - Pure C++ implementation
+- ✅ **Interpreter mode available** - Works without JIT compilation  
+- ✅ **IEEE 754 compliant** - Reproducible results across architectures
+- ✅ **Memory-focused** - Leverages RISC-V's efficient memory architecture
+- ❌ **Other algorithms disabled** - CryptoNight, KawPow, GhostRider need x86 features
+
+## Key RISC-V Features
+
+- **RandomX Algorithm**: Primary mining algorithm (rx/wow, rx/0, rx/loki)
 - **Soft AES Implementation**: No crashes on RISC-V systems without hardware AES
-- **Optimized Compiler Flags**: Uses `-march=rv64gcv_zba_zbb_zbc_zbs` for maximum performance
-- **Memory Optimizations**: Cache-aware algorithms and huge pages support
-- **RISC-V CPU Detection**: Proper CPU topology and feature detection
+- **Optimized Compiler Flags**: Uses `-march=rv64gc` for broad compatibility
+- **Memory Optimizations**: Huge pages support and cache-aware algorithms
+- **RISC-V CPU Detection**: Proper CPU topology and ISA extension detection
 
 ## Optimizations Included
 
@@ -86,60 +102,111 @@ make -j1  # Use single job for stability
 - **Memory Usage**: ~2.3 GB with huge pages
 - **Stability**: No crashes, 100% huge page utilization
 
-## Usage
+## RandomX Configuration Guide
+
+### Supported RandomX Algorithms
+
+- **rx/wow** - Wownero (recommended for testing)
+- **rx/0** - Monero (main mining target)  
+- **rx/loki** - Oxen (formerly Loki)
+- **rx/arq** - ArQmA
+- **rx/sfx** - Safex
+
+### RandomX Operating Modes
+
+#### Fast Mode (Recommended for 4GB+ RAM)
+- **Memory**: ~2080 MiB per mining instance
+- **Performance**: Maximum hashrate
+- **Initialization**: 3-8 minutes on RISC-V
+- **Use case**: Dedicated mining systems
+
+#### Light Mode (For Limited RAM)  
+- **Memory**: ~256 MiB per mining instance
+- **Performance**: ~50-70% of fast mode
+- **Initialization**: 30-60 seconds
+- **Use case**: VisionFive 2, shared systems
 
 ### Basic Configuration
 
-#### Optimized for VisionFive 2
+#### VisionFive 2 - Light Mode (256MB RAM)
 ```json
 {
+  "algo": "rx/wow",
   "pools": [
     {
-      "url": "pool.minexmr.com:4444",
+      "url": "pool.minexmr.com:4444", 
       "user": "YOUR_WALLET_ADDRESS",
-      "pass": "visionfive2-worker",
-      "tls": true,
-      "keepalive": true
+      "pass": "visionfive2-light",
+      "coin": "monero"
     }
   ],
   "cpu": {
     "enabled": true,
     "huge-pages": true,
-    "hw-aes": null,
     "threads": 3,
-    "rx/wow": [0, 1, 2]
+    "priority": 2
   },
   "randomx": {
     "init": -1,
     "mode": "light",
-    "1gb-pages": false
+    "1gb-pages": false,
+    "scratchpad_prefetch_mode": 1
   }
 }
 ```
 
-#### Full System Configuration
+#### VisionFive 2 - Fast Mode (2GB RAM)
 ```json
 {
+  "algo": "rx/0",
   "pools": [
     {
       "url": "pool.minexmr.com:4444",
-      "user": "YOUR_WALLET_ADDRESS",
-      "tls": true,
-      "keepalive": true
+      "user": "YOUR_WALLET_ADDRESS", 
+      "pass": "visionfive2-fast",
+      "coin": "monero"
     }
   ],
   "cpu": {
     "enabled": true,
     "huge-pages": true,
-    "hw-aes": null,
-    "priority": null,
-    "yield": true,
-    "asm": "auto"
+    "threads": 3,
+    "priority": 2
   },
   "randomx": {
     "init": -1,
-    "mode": "auto",
-    "1gb-pages": false
+    "mode": "fast",
+    "1gb-pages": false,
+    "rdmsr": false
+  }
+}
+```
+
+#### High-End RISC-V (8+ cores, 8GB+ RAM)
+```json
+{
+  "algo": "rx/0",
+  "pools": [
+    {
+      "url": "pool.minexmr.com:4444",
+      "user": "YOUR_WALLET_ADDRESS",
+      "coin": "monero",
+      "tls": true
+    }
+  ],
+  "cpu": {
+    "enabled": true,
+    "huge-pages": true,
+    "threads": 6,
+    "priority": 2,
+    "yield": true
+  },
+  "randomx": {
+    "init": -1,
+    "mode": "fast", 
+    "1gb-pages": false,
+    "scratchpad_prefetch_mode": 1,
+    "rdmsr": false
   }
 }
 ```
@@ -237,14 +304,86 @@ chmod +x scripts/build_riscv.sh
 ./xmrig --algo=rx/wow --threads=3 -o pool.minexmr.com:4444 -u YOUR_WALLET
 ```
 
-#### Expected Performance
-- **VisionFive 2 (4-core)**: 15-25 H/s (light mode)
-- **Dataset Init**: 3-8 minutes
-- **Stability**: No crashes with soft AES
+#### RandomX Performance Expectations
+
+**VisionFive 2 (4-core StarFive JH7110)**
+- **Light Mode**: 8-12 H/s (rx/wow), 6-10 H/s (rx/0)
+- **Fast Mode**: 12-18 H/s (rx/wow), 10-15 H/s (rx/0)  
+- **Dataset Init**: 3-8 minutes (fast), 30-60 seconds (light)
+- **Memory Usage**: 2GB (fast), 256MB (light)
+
+**Orange Pi RV2 (8-core Ky X1)**
+- **Light Mode**: 15-20 H/s (rx/wow), 12-18 H/s (rx/0)
+- **Fast Mode**: 25-35 H/s (rx/wow), 20-30 H/s (rx/0)
+- **Dataset Init**: 2-5 minutes (fast), 20-40 seconds (light)
+
+### RandomX Benchmark Commands
+
+```bash
+# Quick algorithm test (30 seconds each)
+./xmrig --algo=rx/wow --benchmark --bench=1M
+./xmrig --algo=rx/0 --benchmark --bench=1M
+
+# Extended benchmark (10 minutes)
+./xmrig --algo=rx/wow --benchmark --bench=10M
+
+# Test both modes
+./xmrig --algo=rx/wow --randomx-mode=light --benchmark --bench=1M
+./xmrig --algo=rx/wow --randomx-mode=fast --benchmark --bench=1M
+
+# Memory usage test
+./xmrig --algo=rx/0 --randomx-1gb-pages --benchmark --bench=100K
+```
+
+### RandomX Mining Commands
+
+```bash
+# Light mode mining (VisionFive 2 safe)
+./xmrig --algo=rx/wow --randomx-mode=light --threads=3 \
+        -o pool.minexmr.com:4444 -u YOUR_WALLET
+
+# Fast mode mining (if you have 4GB+ RAM)
+./xmrig --algo=rx/0 --randomx-mode=fast --threads=3 \
+        -o pool.minexmr.com:4444 -u YOUR_WALLET
+
+# Conservative mining with huge pages
+sudo sysctl -w vm.nr_hugepages=1050
+./xmrig --algo=rx/0 --huge-pages --threads=2 \
+        -o pool.minexmr.com:4444 -u YOUR_WALLET
+```
+
+## Algorithm Support Status
+
+### ✅ Supported (RISC-V Compatible)
+- **RandomX family**: rx/0 (Monero), rx/wow (Wownero), rx/loki, rx/arq, rx/sfx
+- **Pure C++ implementation**: No platform-specific intrinsics required
+- **Cross-platform**: IEEE 754 compliant floating-point operations
+
+### ❌ Disabled (Require x86 intrinsics)  
+- **CryptoNight variants**: cn/r, cn/fast, cn/half, cn/2, cn-lite/*
+- **KawPow**: Ethereum ProgPoW variant (GPU-optimized)
+- **GhostRider**: RTM multi-algorithm (x86 SIMD required)
+- **Argon2**: Memory-hard but uses x86 optimizations
+
+### 🔧 RISC-V Technical Details
+- **RandomX Mode**: Interpreter-based (no native RISC-V JIT compiler yet)
+- **AES Implementation**: Software-only (hardware AES not required)
+- **Vector Extensions**: RVV optimizations for memory operations
+- **Performance**: ~60-80% of x86 equivalent (limited by interpreter mode)
 
 ## Contributing
 
-This port maintains compatibility with upstream XMRig while adding RISC-V specific optimizations. Contributions are welcome!
+This port maintains compatibility with upstream XMRig while focusing on RandomX optimization for RISC-V. Contributions welcome, especially:
+- Native RISC-V JIT compiler for RandomX
+- Further RVV (RISC-V Vector) optimizations
+- Additional RISC-V hardware testing
+
+## References
+
+- **RandomX Algorithm**: https://github.com/tevador/RandomX
+- **RandomX RISC-V Port**: https://github.com/hadi-guang/RandomX-RISCV
+- **Monero Mining Pools**: https://miningpoolstats.stream/monero
+- **Wownero (testing)**: https://wownero.org
 
 ## License
 

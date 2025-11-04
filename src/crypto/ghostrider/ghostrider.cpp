@@ -57,6 +57,8 @@
 
 #if defined(XMRIG_ARM)
 #   include "crypto/cn/sse2neon.h"
+#elif defined(XMRIG_RISCV)
+    // RISC-V: No intrinsics needed for Ghostrider
 #elif defined(__GNUC__)
 #   include <x86intrin.h>
 #else
@@ -235,7 +237,12 @@ struct HelperThread
     inline void wait() const
     {
         while (m_numTasks) {
+#if defined(XMRIG_RISCV)
+            // RISC-V: Use standard pause equivalent
+            std::this_thread::yield();
+#else
             _mm_pause();
+#endif
         }
     }
 
