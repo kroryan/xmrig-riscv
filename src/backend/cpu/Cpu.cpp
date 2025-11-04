@@ -26,6 +26,8 @@
 
 #if defined(XMRIG_FEATURE_HWLOC)
 #   include "backend/cpu/platform/HwlocCpuInfo.h"
+#elif defined(XMRIG_RISCV)
+#   include "backend/cpu/platform/BasicCpuInfo_riscv.h"
 #else
 #   include "backend/cpu/platform/BasicCpuInfo.h"
 #endif
@@ -39,6 +41,8 @@ xmrig::ICpuInfo *xmrig::Cpu::info()
     if (cpuInfo == nullptr) {
 #       if defined(XMRIG_FEATURE_HWLOC)
         cpuInfo = new HwlocCpuInfo();
+#       elif defined(XMRIG_RISCV)
+        cpuInfo = new BasicCpuInfo_riscv();
 #       else
         cpuInfo = new BasicCpuInfo();
 #       endif

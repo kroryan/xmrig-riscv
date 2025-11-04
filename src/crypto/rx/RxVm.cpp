@@ -29,6 +29,11 @@ randomx_vm *xmrig::RxVm::create(RxDataset *dataset, uint8_t *scratchpad, bool so
 {
     int flags = 0;
 
+#ifdef XMRIG_RISCV
+    // Force soft AES on RISC-V as hardware AES is not yet available
+    softAes = true;
+#endif
+
     if (!softAes) {
        flags |= RANDOMX_FLAG_HARD_AES;
     }

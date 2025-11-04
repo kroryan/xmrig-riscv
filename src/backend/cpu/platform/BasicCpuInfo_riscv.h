@@ -1,0 +1,108 @@
+/* XMRig
+ * Copyright (c) 2024 XMRig developers
+ * Copyright (c) 2018-2023 SChernykh   <https://github.com/SChernykh>
+ * Copyright (c) 2016-2023 XMRig       <support@xmrig.com>
+ *
+ *   This program is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#ifndef XMRIG_BASICCPUINFO_RISCV_H
+#define XMRIG_BASICCPUINFO_RISCV_H
+
+#include "backend/cpu/interfaces/ICpuInfo.h"
+
+#include <bitset>
+#include <string>
+#include <vector>
+
+namespace xmrig {
+
+class BasicCpuInfo_riscv : public ICpuInfo
+{
+public:
+    BasicCpuInfo_riscv();
+
+protected:
+    Arch arch() const override                                                       { return ARCH_UNKNOWN; }
+    Assembly::Id assembly() const override;
+    bool has(Flag feature) const override                                            { return m_flags.test(feature); }
+    bool hasAES() const override;
+    bool hasVAES() const override                                                    { return false; }
+    bool hasAVX() const override                                                     { return false; }
+    bool hasAVX2() const override                                                    { return false; }
+    bool hasBMI2() const override                                                    { return false; }
+    bool hasCatL3() const override                                                   { return false; }
+    bool hasOneGbPages() const override;
+    bool hasXOP() const override                                                     { return false; }
+    bool isVM() const override                                                       { return m_flags.test(FLAG_VM); }
+    bool jccErratum() const override                                                 { return false; }
+    const char *backend() const override                                             { return "basic"; }
+    const char *brand() const override                                               { return m_brand.c_str(); }
+    const std::vector<int32_t> &units() const override                               { return m_units; }
+    CpuThreads threads(const Algorithm &algorithm, uint32_t limit) const override;
+    MsrMod msrMod() const override                                                   { return MSR_MOD_NONE; }
+    rapidjson::Value toJSON(rapidjson::Document &doc) const override;
+    size_t cores() const override                                                    { return m_cores; }
+    size_t L2() const override                                                       { return m_l2_cache; }
+    size_t L3() const override                                                       { return m_l3_cache; }
+    size_t nodes() const override                                                    { return m_nodes; }
+    size_t packages() const override                                                 { return m_packages; }
+    size_t threads() const override                                                  { return m_threads; }
+    Vendor vendor() const override                                                   { return m_vendor; }
+    uint32_t model() const override                                                  { return m_model; }
+
+#   ifdef XMRIG_FEATURE_HWLOC
+    bool membind(hwloc_const_bitmap_t nodeset) override                              { return false; }
+    const std::vector<uint32_t> &nodeset() const override                           { return m_nodeset; }
+    hwloc_topology_t topology() const override                                      { return nullptr; }
+#   endif
+
+    // RISC-V specific extensions
+    bool hasZbb() const                                                              { return m_hasZbb; }
+    bool hasZbc() const                                                              { return m_hasZbc; }
+    bool hasZbs() const                                                              { return m_hasZbs; }
+    bool hasRvv() const                                                              { return m_hasRvv; }
+
+private:
+    void detectRiscvExtensions();
+    void parseCpuInfo();
+    void parseIsaString(const char* isa);
+
+    std::bitset<FLAG_MAX> m_flags;
+    std::string m_brand;
+    std::vector<int32_t> m_units;
+    Vendor m_vendor;
+    uint32_t m_model;
+    uint32_t m_stepping;
+    size_t m_cores;
+    size_t m_l2_cache;
+    size_t m_l3_cache;
+    size_t m_nodes;
+    size_t m_packages;
+    size_t m_threads;
+    
+    // RISC-V specific extension flags
+    bool m_hasZbb;
+    bool m_hasZbc;
+    bool m_hasZbs;
+    bool m_hasRvv;
+
+#   ifdef XMRIG_FEATURE_HWLOC
+    std::vector<uint32_t> m_nodeset;
+#   endif
+};
+
+} // namespace xmrig
+
+#endif // XMRIG_BASICCPUINFO_RISCV_H

@@ -23,6 +23,11 @@ endif()
 
 if (XMRIG_64_BIT AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|AMD64)$")
     add_definitions(-DRAPIDJSON_SSE2)
+elseif (XMRIG_RISCV)
+    # RISC-V doesn't support x86 specific features
+    set(WITH_SSE4_1 OFF)
+    set(WITH_AVX2 OFF)
+    set(WITH_VAES OFF)
 else()
     set(WITH_SSE4_1 OFF)
     set(WITH_AVX2 OFF)
@@ -43,6 +48,13 @@ if (NOT ARM_TARGET)
     elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "^(armv7|armv7f|armv7s|armv7k|armv7-a|armv7l|armv7ve)$")
         set(ARM_TARGET 7)
     endif()
+endif()
+
+# RISC-V detection
+if (CMAKE_SYSTEM_PROCESSOR MATCHES "^(riscv64|riscv|RISCV64|RISC-V)$")
+    set(XMRIG_RISCV ON)
+    add_definitions(-DXMRIG_RISCV)
+    message(STATUS "Use RISC-V target (${CMAKE_SYSTEM_PROCESSOR})")
 endif()
 
 if (ARM_TARGET AND ARM_TARGET GREATER 6)
