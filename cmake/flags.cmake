@@ -30,14 +30,16 @@ if (CMAKE_CXX_COMPILER_ID MATCHES GNU)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=armv7-a -mfpu=neon -flax-vector-conversions")
     elseif (XMRIG_RISCV)
         # RISC-V specific optimizations
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=rv64gcv_zba_zbb_zbc_zbs")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=rv64gcv_zba_zbb_zbc_zbs")
+        # Use compatible RISC-V march flag
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=rv64gc")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=rv64gc")
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -funroll-loops -fomit-frame-pointer -finline-functions")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -funroll-loops -fomit-frame-pointer -finline-functions")
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ffast-math -ftree-vectorize")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffast-math -ftree-vectorize")
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -minline-atomics")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -minline-atomics")
+        # Use -finline-atomics instead of -minline-atomics for older GCC
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -finline-atomics")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -finline-atomics")
         
         add_definitions(-DHAVE_ROTR -DXMRIG_RISCV_OPTIMIZED -DXMRIG_RVV_ENABLED)
         
@@ -91,8 +93,8 @@ elseif (CMAKE_CXX_COMPILER_ID MATCHES Clang)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mfpu=neon -march=${CMAKE_SYSTEM_PROCESSOR}")
     elseif (XMRIG_RISCV)
         # RISC-V specific optimizations for Clang
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=rv64gcv_zba_zbb_zbc_zbs")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=rv64gcv_zba_zbb_zbc_zbs")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=rv64gc")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=rv64gc")
         set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -funroll-loops -fomit-frame-pointer")
         set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -funroll-loops -fomit-frame-pointer")
         
