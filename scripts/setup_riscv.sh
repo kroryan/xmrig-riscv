@@ -28,7 +28,12 @@ sudo apt-get install -y \
     libssl-dev \
     libhwloc-dev \
     htop \
-    cpufrequtils
+    linux-cpupower || echo "Some packages may not be available on RISC-V"
+
+# Try alternative CPU frequency tools
+sudo apt-get install -y cpufrequtils 2>/dev/null || \
+sudo apt-get install -y linux-tools-common 2>/dev/null || \
+echo "CPU frequency tools not available, will use manual methods"
 
 # Configure huge pages
 echo "3. Configuring huge pages..."
@@ -50,10 +55,16 @@ echo "vm.nr_hugepages=$HUGEPAGES" | sudo tee -a /etc/sysctl.conf
 # Set CPU governor to performance
 echo "4. Setting CPU governor to performance..."
 if [ -d "/sys/devices/system/cpu/cpu0/cpufreq" ]; then
-    echo performance | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
-    echo "CPU governor set to performance mode"
+    # Try different methods to set governor
+    echo performance | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor 2>/dev/null || \
+    sudo cpupower frequency-set -g performance 2>/dev/null || \
+    echo "Could not set CPU governor automatically"
+    
+    # Verify current governor
+    CURRENT_GOV=$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor 2>/dev/null || echo "unknown")
+    echo "Current CPU governor: $CURRENT_GOV"
 else
-    echo "No CPU frequency scaling available"
+    echo "No CPU frequency scaling available on this system"
 fi
 
 # Create optimized config
