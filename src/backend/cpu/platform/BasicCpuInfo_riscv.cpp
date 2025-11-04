@@ -33,16 +33,13 @@
 #   include <sched.h>
 #endif
 
-xmrig::BasicCpuInfo_riscv::BasicCpuInfo_riscv()
+xmrig::BasicCpuInfo::BasicCpuInfo()
 {
-    m_brand = "RISC-V Processor";
+    strcpy(m_brand, "RISC-V Processor");
     m_vendor = VENDOR_UNKNOWN;
-    m_model = 0;
-    m_stepping = 0;
+    m_arch = ARCH_UNKNOWN;
     m_threads = std::thread::hardware_concurrency();
-    m_cores = m_threads; // Assume 1 core per thread for now
-    m_nodes = 1;
-    m_packages = 1;
+    m_assembly = Assembly::NONE;
     
     // RISC-V specific feature detection
     m_flags[FLAG_AES] = false;        // Hardware AES not available yet
@@ -64,15 +61,11 @@ xmrig::BasicCpuInfo_riscv::BasicCpuInfo_riscv()
     // Detect RISC-V extensions
     detectRiscvExtensions();
     
-    // Set cache sizes (typical RISC-V values)
-    m_l2_cache = 512 * 1024;  // 512KB L2
-    m_l3_cache = 0;           // Many RISC-V don't have L3
-    
     // Parse /proc/cpuinfo on Linux for more accurate information
     parseCpuInfo();
 }
 
-void xmrig::BasicCpuInfo_riscv::detectRiscvExtensions()
+void xmrig::BasicCpuInfo::detectRiscvExtensions()
 {
 #ifdef __riscv
     // Check for standard extensions
@@ -117,7 +110,7 @@ void xmrig::BasicCpuInfo_riscv::detectRiscvExtensions()
 #endif
 }
 
-void xmrig::BasicCpuInfo_riscv::parseCpuInfo()
+void xmrig::BasicCpuInfo::parseCpuInfo()
 {
 #ifdef __linux__
     FILE* fp = fopen("/proc/cpuinfo", "r");
@@ -137,7 +130,8 @@ void xmrig::BasicCpuInfo_riscv::parseCpuInfo()
                 // Remove newline
                 char* newline = strchr(brand, '\n');
                 if (newline) *newline = '\0';
-                m_brand = brand;
+                strncpy(m_brand, brand, sizeof(m_brand) - 1);
+                m_brand[sizeof(m_brand) - 1] = '\0';
             }
         }
         else if (strncmp(line, "isa", 3) == 0) {
@@ -147,23 +141,16 @@ void xmrig::BasicCpuInfo_riscv::parseCpuInfo()
                 parseIsaString(isa);
             }
         }
-        else if (strncmp(line, "cpu cores", 9) == 0) {
-            char* colon = strchr(line, ':');
-            if (colon) {
-                m_cores = atoi(colon + 1);
-            }
-        }
     }
     
     fclose(fp);
     
     // Ensure reasonable defaults
-    if (m_cores == 0) m_cores = m_threads;
     if (m_threads == 0) m_threads = 1;
 #endif
 }
 
-void xmrig::BasicCpuInfo_riscv::parseIsaString(const char* isa)
+void xmrig::BasicCpuInfo::parseIsaString(const char* isa)
 {
     if (!isa) return;
     
@@ -195,20 +182,20 @@ void xmrig::BasicCpuInfo_riscv::parseIsaString(const char* isa)
     }
 }
 
-xmrig::Assembly::Id xmrig::BasicCpuInfo_riscv::assembly() const
+xmrig::Assembly::Id xmrig::BasicCpuInfo::assembly() const
 {
     // RISC-V doesn't have x86-style assembly optimizations
     // Return NONE to use C++ implementations
     return Assembly::NONE;
 }
 
-bool xmrig::BasicCpuInfo_riscv::hasAES() const
+bool xmrig::BasicCpuInfo::hasAES() const
 {
     // Hardware AES not available on current RISC-V implementations
     return false;
 }
 
-bool xmrig::BasicCpuInfo_riscv::hasOneGbPages() const
+bool xmrig::BasicCpuInfo::hasOneGbPages() const
 {
     // Check for 1GB page support
 #ifdef __linux__
@@ -227,14 +214,14 @@ bool xmrig::BasicCpuInfo_riscv::hasOneGbPages() const
     return true; // Assume support by default
 }
 
-xmrig::CpuThreads xmrig::BasicCpuInfo_riscv::threads(const Algorithm &algorithm, uint32_t limit) const
+xmrig::CpuThreads xmrig::BasicCpuInfo::threads(const Algorithm &algorithm, uint32_t limit) const
 {
     // RISC-V specific thread configuration
     const size_t count = std::min<size_t>(limit, m_threads);
     
     if (algorithm.family() == Algorithm::RANDOM_X) {
         // RandomX works well with 1 thread per physical core
-        return CpuThreads(std::min<size_t>(count, m_cores));
+        return CpuThreads(count);
     }
     
     if (algorithm.family() == Algorithm::ARGON2) {
@@ -251,28 +238,28 @@ xmrig::CpuThreads xmrig::BasicCpuInfo_riscv::threads(const Algorithm &algorithm,
     return CpuThreads(count);
 }
 
-rapidjson::Value xmrig::BasicCpuInfo_riscv::toJSON(rapidjson::Document &doc) const
+rapidjson::Value xmrig::BasicCpuInfo::toJSON(rapidjson::Document &doc) const
 {
     using namespace rapidjson;
     
     Value out(kObjectType);
     auto &allocator = doc.GetAllocator();
     
-    out.AddMember("brand", StringRef(brand()), allocator);
+    out.AddMember("brand", StringRef(m_brand), allocator);
     out.AddMember("family", 0, allocator);
-    out.AddMember("model", model(), allocator);
+    out.AddMember("model", 0, allocator);
     out.AddMember("stepping", 0, allocator);
     out.AddMember("proc_info", 0, allocator);
     out.AddMember("aes", hasAES(), allocator);
     out.AddMember("avx2", false, allocator);
     out.AddMember("x64", ICpuInfo::is64bit(), allocator);
     out.AddMember("64_bit", ICpuInfo::is64bit(), allocator);
-    out.AddMember("l2", static_cast<uint64_t>(L2()), allocator);
-    out.AddMember("l3", static_cast<uint64_t>(L3()), allocator);
-    out.AddMember("cores", static_cast<uint64_t>(cores()), allocator);
-    out.AddMember("threads", static_cast<uint64_t>(threads()), allocator);
-    out.AddMember("packages", static_cast<uint64_t>(packages()), allocator);
-    out.AddMember("nodes", static_cast<uint64_t>(nodes()), allocator);
+    out.AddMember("l2", static_cast<uint64_t>(0), allocator);
+    out.AddMember("l3", static_cast<uint64_t>(0), allocator);
+    out.AddMember("cores", static_cast<uint64_t>(0), allocator);
+    out.AddMember("threads", static_cast<uint64_t>(m_threads), allocator);
+    out.AddMember("packages", static_cast<uint64_t>(1), allocator);
+    out.AddMember("nodes", static_cast<uint64_t>(0), allocator);
     out.AddMember("backend", StringRef(backend()), allocator);
     out.AddMember("msr", "none", allocator);
     
@@ -290,4 +277,9 @@ rapidjson::Value xmrig::BasicCpuInfo_riscv::toJSON(rapidjson::Document &doc) con
     out.AddMember("riscv_extensions", extensions, allocator);
     
     return out;
+}
+
+const char *xmrig::BasicCpuInfo::backend() const
+{
+    return "basic";
 }

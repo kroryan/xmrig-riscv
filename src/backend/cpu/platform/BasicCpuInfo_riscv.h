@@ -28,10 +28,10 @@
 
 namespace xmrig {
 
-class BasicCpuInfo_riscv : public ICpuInfo
+class BasicCpuInfo : public ICpuInfo
 {
 public:
-    BasicCpuInfo_riscv();
+    BasicCpuInfo();
 
 protected:
     Arch arch() const override                                                       { return ARCH_UNKNOWN; }
@@ -79,18 +79,24 @@ private:
     void parseCpuInfo();
     void parseIsaString(const char* isa);
 
-    std::bitset<FLAG_MAX> m_flags;
-    std::string m_brand;
+    Arch m_arch             = ARCH_UNKNOWN;
+    bool m_jccErratum       = false;
+    char m_brand[64 + 6]{};
+    size_t m_threads        = 0;
     std::vector<int32_t> m_units;
-    Vendor m_vendor;
-    uint32_t m_model;
-    uint32_t m_stepping;
-    size_t m_cores;
-    size_t m_l2_cache;
-    size_t m_l3_cache;
-    size_t m_nodes;
-    size_t m_packages;
-    size_t m_threads;
+    Vendor m_vendor         = VENDOR_UNKNOWN;
+
+private:
+#   ifndef XMRIG_ARM
+    uint32_t m_procInfo     = 0;
+    uint32_t m_family       = 0;
+    uint32_t m_model        = 0;
+    uint32_t m_stepping     = 0;
+#   endif
+
+    Assembly m_assembly     = Assembly::NONE;
+    MsrMod m_msrMod         = MSR_MOD_NONE;
+    std::bitset<FLAG_MAX> m_flags;
     
     // RISC-V specific extension flags
     bool m_hasZbb;
