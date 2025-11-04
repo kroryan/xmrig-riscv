@@ -72,22 +72,32 @@ chmod +x scripts/build_riscv.sh
 ./scripts/build_riscv.sh
 ```
 
-#### Method 2: Manual Build
+#### Method 2: Manual Build (Tested & Working)
 ```bash
-git clone https://github.com/kroryan/xmrig-riscv.git
-cd xmrig-riscv
+# 1. Navegar al directorio correcto del proyecto
+cd ~/xmrig-riscv
 
-# Enable huge pages (adjust for your system)
-sudo sysctl -w vm.nr_hugepages=512  # VisionFive 2
-# sudo sysctl -w vm.nr_hugepages=2048  # 8GB+ systems
+# 2. Limpiar cualquier build anterior
+rm -rf build
 
+# 3. Crear directorio build limpio
 mkdir build && cd build
+
+# 4. Ahora sí, ejecutar cmake (nota el ".." al final)
 cmake -DCMAKE_BUILD_TYPE=Release \
       -DWITH_ASM=OFF \
+      -DWITH_SSE4_1=OFF \
+      -DWITH_AVX2=OFF \
+      -DWITH_VAES=OFF \
+      -DWITH_HWLOC=OFF \
+      -DWITH_OPENCL=OFF \
+      -DWITH_CUDA=OFF \
       -DCMAKE_C_FLAGS="-march=rv64gc -O2" \
       -DCMAKE_CXX_FLAGS="-march=rv64gc -O2" \
       ..
-make -j1  # Use single job for stability
+
+# 5. Compilar
+make -j1
 ```
 
 ## Performance
@@ -227,15 +237,20 @@ echo performance | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governo
 
 ### Common Build Errors
 
-#### Error: `-minline-atomics` not recognized (VisionFive 2)
-This occurs with GCC 11.3. **Solution:**
+#### Error: `CMakeLists.txt` not found or configuration errors
+This happens when cmake is executed from wrong directory. **Solution:**
 
 ```bash
-# 1. Clean previous build
+# IMPORTANT: Always follow this exact sequence
 cd ~/xmrig-riscv
-rm -rf build && mkdir build && cd build
 
-# 2. Use compatible configuration
+# Clean any previous build
+rm -rf build
+
+# Create fresh build directory  
+mkdir build && cd build
+
+# Execute cmake from build directory pointing to parent (..)
 cmake -DCMAKE_BUILD_TYPE=Release \
       -DWITH_ASM=OFF \
       -DWITH_SSE4_1=OFF \
@@ -248,36 +263,42 @@ cmake -DCMAKE_BUILD_TYPE=Release \
       -DCMAKE_CXX_FLAGS="-march=rv64gc -O2" \
       ..
 
-# 3. Build with single job (avoids memory issues)
+# Build (use single job to avoid memory issues)
 make -j1
 ```
 
-#### Minimal Configuration (if above fails)
+#### Alternative: Automated Build Script
 ```bash
-cmake -DCMAKE_BUILD_TYPE=Release \
-      -DWITH_ASM=OFF \
-      -DWITH_HWLOC=OFF \
-      -DWITH_TLS=OFF \
-      -DWITH_MSR=OFF \
-      -DWITH_OPENCL=OFF \
-      -DWITH_CUDA=OFF \
-      ..
-
-make -j1
-```
-
-#### Automated Build Script
-```bash
-# Use the automated build script
+# If manual method fails, use the automated script
 chmod +x scripts/build_riscv.sh
 ./scripts/build_riscv.sh
 ```
 
+#### Directory Structure Check
+```bash
+# Verify you're in the right place
+pwd                    # Should show: /home/username/xmrig-riscv
+ls CMakeLists.txt      # Should exist
+ls src/                # Should exist
+```
+
+#### Post-Build Verification
+```bash
+# After successful compilation, verify the binary
+cd ~/xmrig-riscv/build
+ls -la xmrig           # Should show executable file
+./xmrig --version      # Should show: XMRig/6.x.x (Linux RISC-V, 64-bit)
+
+# Test RandomX algorithm
+./xmrig --algo=rx/wow --benchmark --bench=1000
+```
+
 ### Build Issues
-- **GCC Version**: Ensure GCC 9+ with RISC-V support
-- **Dependencies**: Check CMake finds all libraries
+- **Wrong Directory**: Always run cmake from `build/` directory pointing to parent `..`
+- **Missing Files**: Ensure `CMakeLists.txt` exists in project root
+- **GCC Version**: Ensure GCC 9+ with RISC-V support  
 - **Memory**: Use `make -j1` on systems with limited RAM
-- **Architecture**: Verify you're on `riscv64` architecture
+- **Architecture**: Verify you're on `riscv64` architecture with `uname -m`
 
 ### Runtime Issues
 - **Low Hashrate**: Check CPU governor, enable huge pages
