@@ -107,9 +107,9 @@ make -j1
 - **Orange Pi RV2**: Ky X1 cores, 8 cores
 
 ### Expected Performance
-- **RandomX**: 30-35 H/s on 8-core RISC-V systems
-- **Dataset Init**: ~8 minutes (down from 30+ minutes)
-- **Memory Usage**: ~2.3 GB with huge pages
+- **RandomX**: 5.0-5.2 H/s on VisionFive 2 (single thread, tested)
+- **Dataset Init**: ~15-20 minutes (1065 seconds observed)
+- **Memory Usage**: ~2.3 GB dataset + 2MB per thread
 - **Stability**: No crashes, 100% huge page utilization
 
 ## RandomX Configuration Guide
@@ -327,16 +327,17 @@ ls -la xmrig           # Should show executable file
 
 #### RandomX Performance Expectations
 
-**VisionFive 2 (4-core StarFive JH7110)**
-- **Light Mode**: 8-12 H/s (rx/wow), 6-10 H/s (rx/0)
-- **Fast Mode**: 12-18 H/s (rx/wow), 10-15 H/s (rx/0)  
-- **Dataset Init**: 3-8 minutes (fast), 30-60 seconds (light)
-- **Memory Usage**: 2GB (fast), 256MB (light)
+**VisionFive 2 (4-core StarFive JH7110) - Real Test Results**
+- **Actual Performance**: 5.0-5.2 H/s (rx/0, single thread optimized)
+- **Peak Performance**: Up to 5.15 H/s max observed
+- **Dataset Init**: 15-20 minutes (1065 seconds measured)
+- **Memory Usage**: 2.3GB dataset + 2048 KB per thread
+- **Active Threads**: 1 thread (auto-optimized by XMRig)
 
-**Orange Pi RV2 (8-core Ky X1)**
-- **Light Mode**: 15-20 H/s (rx/wow), 12-18 H/s (rx/0)
-- **Fast Mode**: 25-35 H/s (rx/wow), 20-30 H/s (rx/0)
-- **Dataset Init**: 2-5 minutes (fast), 20-40 seconds (light)
+**Orange Pi RV2 (8-core Ky X1) - Estimated**
+- **Expected Performance**: 15-25 H/s (multiple threads, estimated)
+- **Dataset Init**: 10-15 minutes (estimated)
+- **Memory Usage**: 2.3GB dataset + 2MB per active thread
 
 ### RandomX Benchmark Commands
 
